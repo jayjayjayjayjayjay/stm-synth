@@ -1,0 +1,22 @@
+[package]
+name = "stm-synth"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+embassy-stm32 = { version = "0.6.0", features =  ["defmt", "time-driver-any", "stm32f407vg", "memory-x", "unstable-pac", "exti"] }
+embassy-executor = { version = "0.10.0", features = ["platform-cortex-m", "executor-thread", "defmt"] }
+embassy-time = { version = "0.5.1", features = ["defmt", "defmt-timestamp-uptime", "tick-hz-32_768"] } 
+cortex-m = { version = "0.7", features = ["critical-section-single-core"]}
+defmt = "1.1.1"
+defmt-rtt = "1.3" 
+panic-probe = { version = "1", features = ["print-defmt"] }
+cortex-m-rt = "0.7"
+
+[profile.release]
+debug = 2
+
+[package.metadata.embassy]
+build = [
+  { target = "thumbv7em-none-eabihf", artifact-dir = "out/examples/stm32f4" }
+]

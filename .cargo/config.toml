@@ -1,0 +1,22 @@
+[target.'cfg(all(target_arch = "arm", target_os = "none"))']
+# replace STM32F429ZITx with your chip as listed in `probe-rs chip list`
+ runner = "probe-rs run --chip STM32F407VG"
+#runner = "teleprobe client run --target nucleo-stm32f429zi -s"
+
+[target.thumbv7em-none-eabihf]
+# If you use cargo run, this tells it to use probe-rs to flash your chip automatically
+# runner = "probe-rs run --chip STM32F411CEUx" 
+ runner = "probe-rs run --chip STM32F407VG"
+
+rustflags = [
+  "-C", "link-arg=-Tlink.x",      # <--- Crucial: Feeds cortex-m-rt's entry code to the linker
+  "-C", "link-arg=-Tdefmt.x",     # Include this if you are using defmt logging (common in Embassy)
+  "-C", "link-arg=--nmagic",      # Prevents unnecessary padding to optimize flash space
+]
+
+
+[build]
+target = "thumbv7em-none-eabihf"
+
+[env]
+DEFMT_LOG = "trace"
