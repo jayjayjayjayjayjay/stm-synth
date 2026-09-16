@@ -28,6 +28,7 @@ async fn main(spawner: Spawner) -> ! {
     let p = embassy_stm32::init(config);
     let mut led = Output::new(p.PD14, Level::High, Speed::Low);
     let mut dac_reset_pin = Output::new(p.PD4, Level::Low, Speed::Low);
+    let mut mclk_pin = Output::new(p.PC7, Level::Low, Speed::High);
 
     let mut config = I2cConfig::default();
     config.frequency = Hertz(400_000);
@@ -40,10 +41,10 @@ async fn main(spawner: Spawner) -> ! {
         Irqs, config,
     );
 
-    spawner.spawn(tasks::cs43l22::task(i2c, dac_reset_pin).unwrap());
+    spawner.spawn(tasks::cs43l22::task(i2c, dac_reset_pin, mclk_pin).unwrap());
 
     loop {
-        info!("Hello World!");
+        //info!("Hello World!");
         led.set_high();
         Timer::after_secs(1).await;
         led.set_low();
