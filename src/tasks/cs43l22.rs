@@ -1,4 +1,4 @@
-use embassy_stm32::gpio::Output;
+use embassy_stm32::gpio::{Input, Output};
 use embassy_stm32::peripherals::I2C1;
 use embassy_stm32::{
     i2c::{Error as I2CError, I2c, Master},
@@ -120,15 +120,25 @@ pub async fn initalise(
 }
 
 pub async fn tone_configure(i2c: &mut I2c<'static, Async, Master>) -> Result<(), CS43L22Error> {
-    i2c.write_simple(BEEP_TONE_CONFIG_ADR, (0b11 << 6) as u8)
+    i2c.write_simple(BEEP_TONE_CONFIG_ADR, (0b00 << 6) as u8)
         .await?;
     if let Ok(res) = i2c.read_simple(BEEP_TONE_CONFIG_ADR).await {
         info!("TONE:{}", res);
     }
-   // i2c.write_simple(BEEP_VOLUME_ADR, 0b110).await?;
+    // i2c.write_simple(BEEP_VOLUME_ADR, 0b110).await?;
     i2c.write_simple(BEEP_VOLUME_ADR, 0b10100).await?;
     i2c.write_simple(BEEP_FREQ_ADR, 0b10000).await?;
     Ok(())
+}
+
+pub async fn tone_play(i2c: &mut I2c<'static, Async, Master>) -> Result<(), CS43L22Error> {
+    i2c.write_simple(BEEP_TONE_CONFIG_ADR, (0b11 << 6) as u8)
+        .await
+}
+
+pub async fn tone_stop(i2c: &mut I2c<'static, Async, Master>) -> Result<(), CS43L22Error> {
+    i2c.write_simple(BEEP_TONE_CONFIG_ADR, (0b00 << 6) as u8)
+        .await
 }
 
 pub async fn power_toggle(
@@ -183,7 +193,11 @@ pub async fn log_status(i2c: &mut I2c<'static, Async, Master>) -> Result<(), CS4
 }
 
 #[embassy_executor::task]
-pub async fn task(mut i2c: I2c<'static, Async, Master>, mut reset_pin: Output<'static>) {
+pub async fn task(
+    mut i2c: I2c<'static, Async, Master>,
+    mut reset_pin: Output<'static>,
+    mut button: Input<'static>,
+) {
     if let Ok(_) = initalise(&mut i2c, &mut reset_pin).await {
         tone_configure(&mut i2c).await;
         headphone_speaker_toggle(&mut i2c, true).await;
@@ -191,10 +205,18 @@ pub async fn task(mut i2c: I2c<'static, Async, Master>, mut reset_pin: Output<'s
         Timer::after_secs(1).await;
         power_toggle(&mut i2c, true).await;
         info!("Tone should be playing");
+        let mut button_flag = false;
 
         loop {
-            Timer::after_secs(5).await;
-            log_status(&mut i2c).await;
+            if (button.is_high() && !button_flag) {
+                tone_play(&mut i2c).await;
+                button_flag = true
+            } else if button.is_low() && button_flag {
+                tone_stop(&mut i2c).await;
+                button_flag = false;
+            }
+            //Timer::after_secs(5).await;
+            //log_status(&mut i2c).await;
         }
     } else {
         error!("Error initalising CS43L22");

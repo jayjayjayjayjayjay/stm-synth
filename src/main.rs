@@ -4,7 +4,7 @@
 use defmt::info;
 use defmt_rtt as _;
 use embassy_executor::Spawner;
-use embassy_stm32::gpio::{Level, Output, Speed};
+use embassy_stm32::gpio::{Level, Output, Input, Speed, Pull};
 use embassy_stm32::i2c::{Config as I2cConfig, I2c};
 use embassy_stm32::i2s::{Config as I2sConfig, I2S};
 use embassy_stm32::rcc::{Pll, PllMul, PllPreDiv, PllRDiv};
@@ -46,6 +46,7 @@ async fn main(spawner: Spawner) -> ! {
     let p = embassy_stm32::init(config);
     let mut led = Output::new(p.PD14, Level::High, Speed::Low);
     let mut dac_reset_pin = Output::new(p.PD4, Level::Low, Speed::Low);
+    let mut button = Input::new(p.PA0, Pull::Down);
 
     let mut i2c_config = I2cConfig::default();
     i2c_config.frequency = Hertz(100_000);
@@ -73,7 +74,7 @@ async fn main(spawner: Spawner) -> ! {
         i2s_config,
     );
 
-    spawner.spawn(tasks::cs43l22::task(i2c, dac_reset_pin).unwrap());
+    spawner.spawn(tasks::cs43l22::task(i2c, dac_reset_pin, button).unwrap());
     spawner.spawn(tasks::audio::task(i2s).unwrap());
 
     loop {
