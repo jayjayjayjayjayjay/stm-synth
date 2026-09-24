@@ -1,3 +1,4 @@
+use embassy_stm32::exti::ExtiInput;
 use embassy_stm32::gpio::{Input, Output};
 use embassy_stm32::peripherals::I2C1;
 use embassy_stm32::{
@@ -14,12 +15,15 @@ const CS43L22_I2C_ADR: u8 = 0x4A;
 
 const POWER_DOWN_ADR: u8 = 0x2;
 const HEADPHONE_POWER_ADR: u8 = 0x4;
+const CLOCKING_CONTROL_ADR: u8 = 0x5;
+const INTERFACE_CONTROL_1: u8 = 0x6;
+const INTERFACE_CONTROL_2: u8 = 0x7;
 const BEEP_FREQ_ADR: u8 = 0x1c;
 const BEEP_VOLUME_ADR: u8 = 0x1d;
 const BEEP_TONE_CONFIG_ADR: u8 = 0x1e;
-const INTERFACE_CONTROL_1: u8 = 0x6;
-const INTERFACE_CONTROL_2: u8 = 0x7;
 const STATUS_ADR: u8 = 0x2E;
+const PCMA_VOLUME: u8 = 0x1A;
+const PCMB_VOLUME: u8 = 0x1B;
 
 // write to 06h
 enum CS43L22Error {
@@ -127,7 +131,8 @@ pub async fn tone_configure(i2c: &mut I2c<'static, Async, Master>) -> Result<(),
     }
     // i2c.write_simple(BEEP_VOLUME_ADR, 0b110).await?;
     i2c.write_simple(BEEP_VOLUME_ADR, 0b10100).await?;
-    i2c.write_simple(BEEP_FREQ_ADR, 0b10000).await?;
+    i2c.write_simple(BEEP_FREQ_ADR, 0b0000).await?;
+    info!("beep freq:{}", i2c.read_simple(BEEP_FREQ_ADR).await?);
     Ok(())
 }
 
@@ -160,7 +165,7 @@ pub async fn headphone_speaker_toggle(
     i2c: &mut I2c<'static, Async, Master>,
     power: bool,
 ) -> Result<(), CS43L22Error> {
-    i2c.write_simple(HEADPHONE_POWER_ADR, 0xAF).await?;
+    //i2c.write_simple(HEADPHONE_POWER_ADR, 0xAF).await?;
     info!("HEADPHONE:{}", i2c.read_simple(HEADPHONE_POWER_ADR).await?);
     Ok(())
 }
@@ -192,31 +197,55 @@ pub async fn log_status(i2c: &mut I2c<'static, Async, Master>) -> Result<(), CS4
     Ok(())
 }
 
+pub async fn clocking_control(
+    i2c: &mut I2c<'static, Async, Master>,
+) -> Result<(), CS43L22Error> {
+    info!("clock control:{}",i2c.read_simple(CLOCKING_CONTROL_ADR).await?);
+/*    i2c.write_bit_simple(CLOCKING_CONTROL_ADR, true, 1).await?;
+    i2c.write_bit_simple(CLOCKING_CONTROL_ADR, false, 2).await?;
+
+    i2c.write_bit_simple(CLOCKING_CONTROL_ADR, true, 3).await?;
+    i2c.write_bit_simple(CLOCKING_CONTROL_ADR, false, 4).await?;*/
+
+    i2c.write_bit_simple(CLOCKING_CONTROL_ADR, false, 0).await?;
+    i2c.write_bit_simple(CLOCKING_CONTROL_ADR, true, 7).await?;
+    i2c.write_bit_simple(CLOCKING_CONTROL_ADR, false, 6).await?;
+    i2c.write_bit_simple(CLOCKING_CONTROL_ADR, true, 5).await?;
+    info!("clock control:{}",i2c.read_simple(CLOCKING_CONTROL_ADR).await?);
+    info!("Toggled Speaker");
+    Ok(())
+}
+
+pub async fn set_pcm_volume(
+    i2c: &mut I2c<'static, Async, Master>,
+) -> Result<(), CS43L22Error> {
+    i2c.write_simple(PCMA_VOLUME,0xE8).await?;
+    i2c.write_simple(PCMB_VOLUME,0xE8).await?;
+    Ok(())
+}
+
 #[embassy_executor::task]
 pub async fn task(
     mut i2c: I2c<'static, Async, Master>,
     mut reset_pin: Output<'static>,
-    mut button: Input<'static>,
+    mut button: ExtiInput<'static, Async>,
 ) {
     if let Ok(_) = initalise(&mut i2c, &mut reset_pin).await {
         tone_configure(&mut i2c).await;
         headphone_speaker_toggle(&mut i2c, true).await;
         set_dac_interface_format(&mut i2c).await;
+        clocking_control(&mut i2c).await;
         Timer::after_secs(1).await;
         power_toggle(&mut i2c, true).await;
         info!("Tone should be playing");
         let mut button_flag = false;
 
         loop {
-            if (button.is_high() && !button_flag) {
-                tone_play(&mut i2c).await;
-                button_flag = true
-            } else if button.is_low() && button_flag {
-                tone_stop(&mut i2c).await;
-                button_flag = false;
-            }
-            //Timer::after_secs(5).await;
-            //log_status(&mut i2c).await;
+            button.wait_for_rising_edge().await;
+            tone_play(&mut i2c).await;
+            button.wait_for_falling_edge().await;
+            tone_stop(&mut i2c).await;
+            log_status(&mut i2c).await;
         }
     } else {
         error!("Error initalising CS43L22");
