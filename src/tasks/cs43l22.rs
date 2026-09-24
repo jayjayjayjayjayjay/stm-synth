@@ -1,6 +1,5 @@
 use embassy_stm32::exti::ExtiInput;
-use embassy_stm32::gpio::{Input, Output};
-use embassy_stm32::peripherals::I2C1;
+use embassy_stm32::gpio::Output;
 use embassy_stm32::{
     i2c::{Error as I2CError, I2c, Master},
     mode::Async,
@@ -163,7 +162,7 @@ pub async fn power_toggle(
 
 pub async fn headphone_speaker_toggle(
     i2c: &mut I2c<'static, Async, Master>,
-    power: bool,
+    _power: bool,
 ) -> Result<(), CS43L22Error> {
     //i2c.write_simple(HEADPHONE_POWER_ADR, 0xAF).await?;
     info!("HEADPHONE:{}", i2c.read_simple(HEADPHONE_POWER_ADR).await?);
@@ -238,7 +237,7 @@ pub async fn task(
         Timer::after_secs(1).await;
         power_toggle(&mut i2c, true).await;
         info!("Tone should be playing");
-        let mut button_flag = false;
+        let _button_flag = false;
 
         loop {
             button.wait_for_rising_edge().await;

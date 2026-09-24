@@ -22,5 +22,5 @@ pub fn periodic(
 }
  
 pub fn sine(buf: &mut [u16], sample_rate: u32, freq_hz: f32, amp: f32) {
-    periodic(buf, sample_rate, freq_hz, amp, |p| sinf((TAU * p)));
+    periodic(buf, sample_rate, freq_hz, amp, |p| sinf(TAU * p));
 }

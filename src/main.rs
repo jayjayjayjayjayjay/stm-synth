@@ -1,21 +1,19 @@
 #![no_std]
 #![no_main]
 
-use defmt::info;
 use defmt_rtt as _;
 use embassy_executor::Spawner;
-use embassy_stm32::gpio::{Input, Level, Output, Pull, Speed};
+use embassy_stm32::gpio::{Level, Output, Pull, Speed};
 
 use embassy_stm32::exti;
 use embassy_stm32::exti::ExtiInput;
 use embassy_stm32::i2c::{Config as I2cConfig, I2c};
 use embassy_stm32::i2s::{Config as I2sConfig, I2S};
 use embassy_stm32::interrupt::typelevel;
-use embassy_stm32::pac;
 use embassy_stm32::rcc::*;
-use embassy_stm32::rcc::{Pll, PllMul, PllPreDiv, PllRDiv, frequency};
+use embassy_stm32::rcc::{Pll, PllMul, PllPreDiv, PllRDiv};
 use embassy_stm32::time::Hertz;
-use embassy_stm32::{Config, bind_interrupts, dma, i2c, i2s, peripherals};
+use embassy_stm32::{Config, bind_interrupts, dma, i2c, peripherals};
 use embassy_time::Timer;
 use static_cell::StaticCell;
 
@@ -58,8 +56,8 @@ async fn main(spawner: Spawner) -> ! {
 
     let p = embassy_stm32::init(config);
     let mut led = Output::new(p.PD14, Level::High, Speed::Low);
-    let mut dac_reset_pin = Output::new(p.PD4, Level::Low, Speed::Low);
-    let mut button_exti = ExtiInput::new(p.PA0, p.EXTI0, Pull::Down, Irqs);
+    let dac_reset_pin = Output::new(p.PD4, Level::Low, Speed::Low);
+    let button_exti = ExtiInput::new(p.PA0, p.EXTI0, Pull::Down, Irqs);
 
     let mut i2c_config = I2cConfig::default();
     i2c_config.frequency = Hertz(100_000);
