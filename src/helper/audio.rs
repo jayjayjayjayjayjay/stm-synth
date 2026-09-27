@@ -1,7 +1,6 @@
 use core::f32::consts::PI;
 use micromath::F32Ext;
 
-use defmt::{error, info};
 pub struct SineWave {
     phase: f32,
     phase_increment: f32,

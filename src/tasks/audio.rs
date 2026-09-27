@@ -2,10 +2,8 @@ use embassy_executor::Spawner;
 use embassy_stm32::i2s::I2S;
 use embassy_time::Timer;
 
-use defmt::{error,info};
 
-use crate::helper::audio::SineWave;
-use embassy_sync::{blocking_mutex::raw::ThreadModeRawMutex, channel::Channel};
+use embassy_sync::channel::Channel;
 
 use crate::tasks;
 use crate::types::audio as AudioTypes;

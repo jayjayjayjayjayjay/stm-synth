@@ -58,7 +58,7 @@ async fn main(spawner: Spawner) -> ! {
     });
 
     let p = embassy_stm32::init(config);
-    let mut led = Output::new(p.PD14, Level::High, Speed::Low);
+    let _led = Output::new(p.PD14, Level::High, Speed::Low);
     let dac_reset_pin = Output::new(p.PD4, Level::Low, Speed::Low);
     let button_exti = ExtiInput::new(p.PA0, p.EXTI0, Pull::Down, Irqs);
 
