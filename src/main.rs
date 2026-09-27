@@ -5,15 +5,17 @@ use defmt_rtt as _;
 use embassy_executor::Spawner;
 use embassy_stm32::gpio::{Level, Output, Pull, Speed};
 
+use embassy_stm32::adc::{Adc, AdcChannel};
 use embassy_stm32::exti;
 use embassy_stm32::exti::ExtiInput;
 use embassy_stm32::i2c::{Config as I2cConfig, I2c};
 use embassy_stm32::i2s::{Config as I2sConfig, I2S};
 use embassy_stm32::interrupt::typelevel;
+use embassy_stm32::peripherals::ADC1;
 use embassy_stm32::rcc::*;
 use embassy_stm32::rcc::{Pll, PllMul, PllPreDiv, PllRDiv};
 use embassy_stm32::time::Hertz;
-use embassy_stm32::{Config, bind_interrupts, dma, i2c, peripherals};
+use embassy_stm32::{Config, adc, bind_interrupts, dma, i2c, peripherals};
 use embassy_time::Timer;
 use static_cell::StaticCell;
 
@@ -23,7 +25,10 @@ mod helper;
 mod tasks;
 mod types;
 
+use types::audio::{AUDIO_BUFFER_SIZE, UserInputs};
+
 bind_interrupts!(struct Irqs {
+
     I2C1_EV => i2c::EventInterruptHandler<peripherals::I2C1>;
     I2C1_ER => i2c::ErrorInterruptHandler<peripherals::I2C1>;
 
@@ -35,10 +40,7 @@ bind_interrupts!(struct Irqs {
     EXTI0 => exti::InterruptHandler<typelevel::EXTI0>;
 });
 
-const AUDIO_BUFFER_SIZE: usize = 240;
-
 static AUDIO_BUFFER: StaticCell<[u16; AUDIO_BUFFER_SIZE]> = StaticCell::new();
-
 
 #[embassy_executor::main]
 async fn main(spawner: Spawner) -> ! {
@@ -88,8 +90,11 @@ async fn main(spawner: Spawner) -> ! {
         Irqs,
         i2s_config,
     );
-
+    let adc = Adc::new(p.ADC1);
+    let pot_pin = p.PA1.degrade_adc();
+    spawner.spawn(tasks::pot_read::task(adc,pot_pin).unwrap());
     spawner.spawn(tasks::cs43l22::task(i2c, dac_reset_pin, button_exti).unwrap());
+
     spawner.spawn(tasks::audio::task(i2s, spawner).unwrap());
 
     loop {
