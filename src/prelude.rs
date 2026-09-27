@@ -1,2 +1,2 @@
-pub use defmt::{info, warn, debug, error, trace};
+pub use defmt::{info, error};
 pub use crate::types;

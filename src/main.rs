@@ -11,11 +11,10 @@ use embassy_stm32::exti::ExtiInput;
 use embassy_stm32::i2c::{Config as I2cConfig, I2c};
 use embassy_stm32::i2s::{Config as I2sConfig, I2S};
 use embassy_stm32::interrupt::typelevel;
-use embassy_stm32::peripherals::ADC1;
 use embassy_stm32::rcc::*;
 use embassy_stm32::rcc::{Pll, PllMul, PllPreDiv, PllRDiv};
 use embassy_stm32::time::Hertz;
-use embassy_stm32::{Config, adc, bind_interrupts, dma, i2c, peripherals};
+use embassy_stm32::{Config, bind_interrupts, dma, i2c, peripherals};
 use embassy_time::Timer;
 use static_cell::StaticCell;
 
@@ -26,7 +25,7 @@ pub mod types;
 mod helper;
 mod tasks;
 
-use types::audio::{AUDIO_BUFFER_SIZE, UserInputs};
+use types::audio::AUDIO_BUFFER_SIZE;
 
 bind_interrupts!(struct Irqs {
 

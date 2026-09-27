@@ -1,5 +1,4 @@
 use core::f32::consts::PI;
-use micromath::F32Ext;
 
 pub struct SquareWave {
     phase: f32,

@@ -1,6 +1,6 @@
 use core::sync::atomic::{AtomicU16, Ordering};
 use embassy_stm32::peripherals::ADC1;
-use embassy_stm32::adc::{Adc, AdcChannel, AnyAdcChannel, SampleTime};
+use embassy_stm32::adc::{Adc, AnyAdcChannel, SampleTime};
 use embassy_time::Timer;
 
 // TODO improve logic, maybe macro and seperate task creation?

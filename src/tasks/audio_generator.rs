@@ -1,20 +1,17 @@
 use crate::prelude::*;
 
-use core::sync::atomic::{AtomicU16, Ordering};
-use defmt::{error, info};
-use embassy_stm32::adc::{Adc, Instance};
+use core::sync::atomic::Ordering;
 
-use crate::helper::audio::{ SquareWave, crossfade_buffers};
+use crate::helper::audio::crossfade_buffers;
 use crate::helper::FmWave::{FmWave};
 use crate::helper::SineWave::{SineWave};
 use crate::tasks::potentiometer_read::{POTENTIOMETER_VALUE, POTENTIOMETER_VALUE_2};
-use types::audio as AudioTypes;
 use types::audio::{AUDIO_BUFFER_SIZE, AudioChannel};
 
 #[embassy_executor::task]
 pub async fn task(channel: &'static AudioChannel) {
     let mut freq = 200.0;
-    let mut mix = 0;
+    let _mix = 0;
     let mut sine = SineWave::new(
         freq, 48_000.0, 200.0, // 25% of i16 full scale
     );

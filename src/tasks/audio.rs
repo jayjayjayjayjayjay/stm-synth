@@ -2,7 +2,6 @@ use crate::prelude::*;
 
 use embassy_executor::Spawner;
 use embassy_stm32::i2s::I2S;
-use embassy_stm32::peripherals::ADC1;
 use embassy_time::Timer;
 
 use embassy_sync::channel::Channel;
