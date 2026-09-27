@@ -1,26 +1,51 @@
-use core::f32::consts::TAU;
-use libm::sinf;
-/// f32 -> `u16` (holding i16 bits). Clamps to full scale instead of wrapping.
-#[inline]
-pub fn from_f32(x: f32) -> u16 {
-    ((x.clamp(-1.0, 1.0) * 32767.0) as i16) as u16
+use core::f32::consts::PI;
+use micromath::F32Ext;
+
+use defmt::{error, info};
+pub struct SineWave {
+    phase: f32,
+    phase_increment: f32,
+    amplitude: f32,
+    sample_rate: f32,
 }
 
-pub fn periodic(
-    buf: &mut [u16],
-    sample_rate: u32,
-    freq_hz: f32,
-    amp: f32,
-    wave: impl Fn(f32) -> f32,
-) {
-    let step = freq_hz as f64 / sample_rate as f64;
-    for (n, out) in buf.iter_mut().enumerate() {
-        // f64 phase keeps long buffers from drifting out of tune
-        let phase = ((n as f64 * step) % 1.0) as f32;
-        *out = from_f32(amp * wave(phase));
+impl SineWave {
+    pub fn new(frequency: f32, sample_rate: f32, amplitude: f32) -> Self {
+        Self {
+            phase: 0.0,
+            phase_increment: 2.0 * PI * 2.0 * frequency / sample_rate,
+            amplitude,
+            sample_rate,
+        }
     }
-}
- 
-pub fn sine(buf: &mut [u16], sample_rate: u32, freq_hz: f32, amp: f32) {
-    periodic(buf, sample_rate, freq_hz, amp, |p| sinf(TAU * p));
+
+    pub fn change_frequency(&mut self,frequency :f32) {
+        self.phase_increment = 2.0 * PI * 2.0 * frequency / self.sample_rate;
+
+    }
+
+
+    pub fn next_sample(&mut self) -> u16 {
+        let sample = self.phase.sin() * self.amplitude;
+
+        self.phase += self.phase_increment;
+
+        if self.phase >= 2.0 * PI {
+            self.phase -= 2.0 * PI;
+        }
+
+        sample as i16 as u16
+    }
+
+    pub fn fill_buffer(&mut self, buffer: &mut [u16]) {
+        /*for sample in buffer.iter_mut() {
+            *sample = self.next_sample();
+        }*/
+        for frame in buffer.chunks_exact_mut(2) {
+            let sample = self.next_sample();
+
+            frame[0] = sample; // Left
+            frame[1] = sample; // Right
+        }
+    }
 }

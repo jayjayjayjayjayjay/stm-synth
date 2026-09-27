@@ -218,8 +218,8 @@ pub async fn clocking_control(
 pub async fn set_pcm_volume(
     i2c: &mut I2c<'static, Async, Master>,
 ) -> Result<(), CS43L22Error> {
-    i2c.write_simple(PCMA_VOLUME,0xE8).await?;
-    i2c.write_simple(PCMB_VOLUME,0xE8).await?;
+    i2c.write_simple(PCMA_VOLUME,0x18).await?;
+    i2c.write_simple(PCMB_VOLUME,0x18).await?;
     Ok(())
 }
 
@@ -234,6 +234,7 @@ pub async fn task(
         headphone_speaker_toggle(&mut i2c, true).await;
         set_dac_interface_format(&mut i2c).await;
         clocking_control(&mut i2c).await;
+        set_pcm_volume(&mut i2c).await;
         Timer::after_secs(1).await;
         power_toggle(&mut i2c, true).await;
         info!("Tone should be playing");

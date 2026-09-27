@@ -14,6 +14,8 @@ defmt-rtt = "1.3"
 panic-probe = { version = "1", features = ["print-defmt"] }
 cortex-m-rt = "0.7"
 libm = "0.2"
+embassy-sync = "0.8.0"
+micromath = "2.1.0"
 
 [profile.release]
 debug = 2

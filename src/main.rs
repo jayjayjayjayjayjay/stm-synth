@@ -35,7 +35,10 @@ bind_interrupts!(struct Irqs {
     EXTI0 => exti::InterruptHandler<typelevel::EXTI0>;
 });
 
-static AUDIO_BUFFER: StaticCell<[u16; 8196]> = StaticCell::new();
+const AUDIO_BUFFER_SIZE: usize = 240;
+
+static AUDIO_BUFFER: StaticCell<[u16; AUDIO_BUFFER_SIZE]> = StaticCell::new();
+
 
 #[embassy_executor::main]
 async fn main(spawner: Spawner) -> ! {
@@ -65,7 +68,7 @@ async fn main(spawner: Spawner) -> ! {
     let mut i2s_config = I2sConfig::default();
     i2s_config.frequency = Hertz(48000);
 
-    let audio_buffer = AUDIO_BUFFER.init([0u16; 8196]);
+    let audio_buffer = AUDIO_BUFFER.init([0u16; AUDIO_BUFFER_SIZE]);
 
     let i2c = I2c::new(
         p.I2C1, p.PB6,      // SCL
@@ -87,13 +90,10 @@ async fn main(spawner: Spawner) -> ! {
     );
 
     spawner.spawn(tasks::cs43l22::task(i2c, dac_reset_pin, button_exti).unwrap());
-    spawner.spawn(tasks::audio::task(i2s).unwrap());
+    spawner.spawn(tasks::audio::task(i2s, spawner).unwrap());
 
     loop {
         //info!("Hello World!");
-        led.set_high();
-        Timer::after_secs(1).await;
-        led.set_low();
-        Timer::after_secs(1).await;
+        Timer::after_secs(10).await;
     }
 }
