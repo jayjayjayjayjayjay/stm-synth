@@ -21,9 +21,10 @@ use static_cell::StaticCell;
 
 use panic_probe as _;
 
+mod prelude;
+pub mod types;
 mod helper;
 mod tasks;
-mod types;
 
 use types::audio::{AUDIO_BUFFER_SIZE, UserInputs};
 
@@ -93,7 +94,7 @@ async fn main(spawner: Spawner) -> ! {
     let adc = Adc::new(p.ADC1);
     let pot_pin = p.PA1.degrade_adc();
     let pot_pin_2 = p.PA2.degrade_adc();
-    spawner.spawn(tasks::pot_read::task(adc,pot_pin,pot_pin_2).unwrap());
+    spawner.spawn(tasks::potentiometer_read::task(adc,pot_pin,pot_pin_2).unwrap());
     spawner.spawn(tasks::cs43l22::task(i2c, dac_reset_pin, button_exti).unwrap());
 
     spawner.spawn(tasks::audio::task(i2s, spawner).unwrap());

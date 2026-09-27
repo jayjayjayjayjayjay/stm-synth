@@ -1,3 +1,5 @@
+use crate::prelude::*;
+
 use embassy_stm32::exti::ExtiInput;
 use embassy_stm32::gpio::Output;
 use embassy_stm32::{
@@ -6,7 +8,6 @@ use embassy_stm32::{
 };
 use embassy_time::Timer;
 
-use defmt::{error, info};
 
 use crate::types::errors::GeneralError;
 
@@ -242,10 +243,10 @@ pub async fn task(
 
         loop {
             button.wait_for_rising_edge().await;
-            tone_play(&mut i2c).await;
+            let _ = tone_play(&mut i2c).await;
             button.wait_for_falling_edge().await;
-            tone_stop(&mut i2c).await;
-            log_status(&mut i2c).await;
+            let _=  tone_stop(&mut i2c).await;
+            let _ = log_status(&mut i2c).await;
         }
     } else {
         error!("Error initalising CS43L22");
