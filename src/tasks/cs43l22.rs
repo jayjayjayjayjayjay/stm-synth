@@ -105,21 +105,21 @@ pub async fn initalise(
 
     let mut write_data = [0x32];
     let mut read_data = [0x0];
-    i2c.write_read(CS43L22_I2C_ADR, &mut write_data, &mut read_data)
+    i2c.write_read(CS43L22_I2C_ADR, &write_data, &mut read_data)
         .await?;
 
     read_data[0] |= 1 << 7;
     let mut data = [0x32, read_data[0]];
-    i2c.write(CS43L22_I2C_ADR, &mut data).await?;
+    i2c.write(CS43L22_I2C_ADR, &data).await?;
 
     read_data[0] &= !(1 << 7);
     let mut data = [0x32, read_data[0]];
-    i2c.write(CS43L22_I2C_ADR, &mut data).await?;
+    i2c.write(CS43L22_I2C_ADR, &data).await?;
     // let mut write_data = [0x1];
     //let mut read_data = [0x0];
     //i2c.write_read(0x4A, &mut write_data, &mut read_data).await;
     let mut data = [0x0, 0x0];
-    i2c.write(CS43L22_I2C_ADR, &mut data).await?;
+    i2c.write(CS43L22_I2C_ADR, &data).await?;
     Ok(())
 }
 

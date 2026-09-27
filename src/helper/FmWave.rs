@@ -54,7 +54,7 @@ impl FmWave {
     }
 
     pub fn fill_buffer(&mut self, buffer: &mut [u16]) {
-        for frame in buffer.chunks_exact_mut(2) {
+        for frame in buffer.as_chunks_mut::<2>().0 {
             let sample = self.next_sample();
 
             frame[0] = sample; // Left

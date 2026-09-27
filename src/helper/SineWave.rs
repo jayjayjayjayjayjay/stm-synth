@@ -40,7 +40,7 @@ impl SineWave {
         /*for sample in buffer.iter_mut() {
             *sample = self.next_sample();
         }*/
-        for frame in buffer.chunks_exact_mut(2) {
+        for frame in buffer.as_chunks_mut::<2>().0 {
             let sample = self.next_sample();
 
             frame[0] = sample; // Left
